@@ -1,0 +1,74 @@
+@model MAAN.SiteOps.ViewModels.ActivityIndexViewModel
+@using MAAN.SiteOps.Models
+@{
+    ViewData["Title"] = "Activities";
+    string BadgeClass(string status) => status switch
+    {
+        Activity.SubmittedStatus => "bg-warning text-dark",
+        Activity.ReturnedStatus => "bg-danger",
+        Activity.ApprovedStatus => "bg-success",
+        Activity.CancelledStatus => "bg-dark",
+        _ => "bg-secondary"
+    };
+    string RoleLabel(string role) => role switch
+    {
+        Activity.ImplementedByMaanRole => "Implemented by MA'AN",
+        Activity.FacilitatedByMaanRole => "Facilitated by MA'AN",
+        Activity.CoordinatedByMaanRole => "Coordinated by MA'AN",
+        Activity.ReferredByMaanRole => "Referred by MA'AN",
+        Activity.CommunityLedWithMaanSupportRole => "Community-led with MA'AN support",
+        _ => role
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Activities</h1>
+    <a asp-action="Create" class="btn btn-primary">Create Activity</a>
+</div>
+
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-3"><label class="form-label" for="ProjectId">Project</label><select name="ProjectId" id="ProjectId" class="form-select" asp-items="ViewBag.Projects"><option value="">All projects</option></select></div>
+    <div class="col-md-3"><label class="form-label" for="ProjectSiteId">Site</label><select name="ProjectSiteId" id="ProjectSiteId" class="form-select" asp-items="ViewBag.Sites"><option value="">All sites</option></select></div>
+    <div class="col-md-3"><label class="form-label" for="ActivityTypeId">Activity Type</label><select name="ActivityTypeId" id="ActivityTypeId" class="form-select" asp-items="ViewBag.ActivityTypes"><option value="">All types</option></select></div>
+    <div class="col-md-3"><label class="form-label" for="Status">Status</label><select name="Status" id="Status" class="form-select" asp-items="ViewBag.Statuses"><option value="">All statuses</option></select></div>
+    <div class="col-md-3"><label class="form-label" for="DateFrom">Date From</label><input type="date" name="DateFrom" id="DateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-md-3"><label class="form-label" for="DateTo">Date To</label><input type="date" name="DateTo" id="DateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-md-6 d-flex align-items-end gap-2"><button class="btn btn-outline-primary" type="submit">Filter</button><a asp-action="Index" class="btn btn-outline-secondary">Clear</a></div>
+</form>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+    <thead><tr><th>Date</th><th>Project</th><th>Site</th><th>Activity Type</th><th>Implementation Role</th><th>Total Participants</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    @foreach (var item in Model.Activities)
+    {
+        <tr>
+            <td>@item.ActivityDate.ToString("yyyy-MM-dd")</td>
+            <td>@item.ProjectSite?.Project?.ProjectCode</td>
+            <td>@item.ProjectSite?.Site?.SiteCode - @item.ProjectSite?.Site?.SiteName</td>
+            <td>@item.ActivityType?.Name</td>
+            <td>@RoleLabel(item.ImplementationRole)</td>
+            <td>@(item.Participant?.TotalParticipants ?? 0)</td>
+            <td><span class="badge @BadgeClass(item.Status)">@item.Status</span></td>
+            <td class="text-nowrap">
+                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Details</a>
+                @if (item.Status is Activity.DraftStatus or Activity.ReturnedStatus)
+                {
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <form asp-action="Submit" asp-route-id="@item.Id" method="post" class="d-inline"><button class="btn btn-sm btn-outline-warning" type="submit">Submit</button></form>
+                }
+                @if (item.Status == Activity.DraftStatus)
+                {
+                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline"><button class="btn btn-sm btn-outline-danger" type="submit">Delete</button></form>
+                }
+                @if (item.Status == Activity.SubmittedStatus)
+                {
+                    <form asp-action="Approve" asp-route-id="@item.Id" method="post" class="d-inline"><button class="btn btn-sm btn-outline-success" type="submit">Approve</button></form>
+                    <form asp-action="Return" asp-route-id="@item.Id" method="post" class="d-inline"><button class="btn btn-sm btn-outline-danger" type="submit">Return</button></form>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>

@@ -1,0 +1,22 @@
+@model MAAN.SiteOps.ViewModels.ActivityFormViewModel
+@{
+    ViewData["Title"] = "Create Activity";
+}
+
+<h1>Create Activity</h1>
+<hr />
+<div class="row">
+    <div class="col-lg-9">
+        <form asp-action="Create" method="post">
+            <partial name="_Form" model="Model" />
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Create Activity</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

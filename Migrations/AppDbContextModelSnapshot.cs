@@ -278,7 +278,7 @@ namespace MAAN.SiteOps.Migrations
                             RequiresAttachment = false,
                             RequiresItems = false,
                             RequiresPWD = false,
-                            RequiresParticipants = false,
+                            RequiresParticipants = true,
                             RequiresSummary = false,
                             RequiresTopic = false
                         },
@@ -294,7 +294,7 @@ namespace MAAN.SiteOps.Migrations
                             RequiresAttachment = false,
                             RequiresItems = false,
                             RequiresPWD = false,
-                            RequiresParticipants = false,
+                            RequiresParticipants = true,
                             RequiresSummary = false,
                             RequiresTopic = false
                         },
@@ -342,7 +342,7 @@ namespace MAAN.SiteOps.Migrations
                             RequiresAttachment = false,
                             RequiresItems = false,
                             RequiresPWD = false,
-                            RequiresParticipants = false,
+                            RequiresParticipants = true,
                             RequiresSummary = false,
                             RequiresTopic = false
                         },
@@ -374,7 +374,7 @@ namespace MAAN.SiteOps.Migrations
                             RequiresAttachment = false,
                             RequiresItems = false,
                             RequiresPWD = false,
-                            RequiresParticipants = false,
+                            RequiresParticipants = true,
                             RequiresSummary = false,
                             RequiresTopic = false
                         },
@@ -390,7 +390,7 @@ namespace MAAN.SiteOps.Migrations
                             RequiresAttachment = false,
                             RequiresItems = false,
                             RequiresPWD = false,
-                            RequiresParticipants = false,
+                            RequiresParticipants = true,
                             RequiresSummary = false,
                             RequiresTopic = false
                         });

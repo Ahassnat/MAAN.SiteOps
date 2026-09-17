@@ -1,0 +1,141 @@
+@model MAAN.SiteOps.ViewModels.ActivityFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+@if (!string.IsNullOrWhiteSpace(Model.DuplicateWarning))
+{
+    <div class="alert alert-warning">@Model.DuplicateWarning</div>
+}
+
+@if (Model.Id > 0)
+{
+    <input asp-for="Id" type="hidden" />
+}
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="ProjectId" class="form-label"></label>
+        <select asp-for="ProjectId" class="form-select" asp-items="ViewBag.ProjectId" id="ProjectId">
+            <option value="">-- Select Project --</option>
+        </select>
+        <span asp-validation-for="ProjectId" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ProjectSiteId" class="form-label"></label>
+        <select asp-for="ProjectSiteId" class="form-select" asp-items="ViewBag.ProjectSiteId" id="ProjectSiteId">
+            <option value="">-- Select Site --</option>
+        </select>
+        <span asp-validation-for="ProjectSiteId" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ActivityTypeId" class="form-label"></label>
+        <select asp-for="ActivityTypeId" class="form-select" asp-items="ViewBag.ActivityTypeId" id="ActivityTypeId">
+            <option value="">-- Select Activity Type --</option>
+        </select>
+        <span asp-validation-for="ActivityTypeId" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ActivityDate" class="form-label"></label>
+        <input asp-for="ActivityDate" class="form-control" />
+        <span asp-validation-for="ActivityDate" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ImplementationRole" class="form-label"></label>
+        <select asp-for="ImplementationRole" class="form-select" asp-items="ViewBag.ImplementationRoles"></select>
+        <span asp-validation-for="ImplementationRole" class="text-danger"></span>
+    </div>
+</div>
+
+<hr class="my-4" />
+<section id="participantSection" class="@(Model.ShowParticipants ? "" : "d-none")">
+    <h5>Participants</h5>
+    <div class="row g-3">
+        @foreach (var field in new[] { "Men", "Women", "Boys", "Girls", "ElderlyMen", "ElderlyWomen", "PersonsWithDisabilities" })
+        {
+            var expression = field switch
+            {
+                "Men" => (int?)Model.Men,
+                "Women" => (int?)Model.Women,
+                "Boys" => (int?)Model.Boys,
+                "Girls" => (int?)Model.Girls,
+                "ElderlyMen" => (int?)Model.ElderlyMen,
+                "ElderlyWomen" => (int?)Model.ElderlyWomen,
+                _ => (int?)Model.PersonsWithDisabilities
+            };
+            var label = field == "PersonsWithDisabilities" ? "Persons with Disabilities" : field;
+            <div class="col-sm-6 col-lg-3">
+                <label for="@field" class="form-label">@label</label>
+                <input id="@field" name="@field" value="@expression" type="number" min="0" class="form-control participant-input" />
+                <span asp-validation-for="@field" class="text-danger"></span>
+            </div>
+        }
+        <div class="col-sm-6 col-lg-3">
+            <label class="form-label">Total Participants</label>
+            <output id="totalParticipants" class="form-control bg-light">@Model.TotalParticipants</output>
+            <small class="text-muted">PWD is reported separately and is not added to this total.</small>
+        </div>
+    </div>
+</section>
+
+<div class="mt-4">
+    <label asp-for="Summary" class="form-label">Summary <span id="summaryRequired" class="text-danger @(Model.SummaryRequired ? "" : "d-none")">*</span></label>
+    <textarea asp-for="Summary" class="form-control" rows="4" id="Summary"></textarea>
+    <span asp-validation-for="Summary" class="text-danger"></span>
+</div>
+<div class="mt-3">
+    <label asp-for="Notes" class="form-label"></label>
+    <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
+    <span asp-validation-for="Notes" class="text-danger"></span>
+</div>
+
+<script>
+    (() => {
+        function initializeActivityForm() {
+        const project = document.getElementById('ProjectId');
+        const site = document.getElementById('ProjectSiteId');
+        const type = document.getElementById('ActivityTypeId');
+        const participantSection = document.getElementById('participantSection');
+        const summaryRequired = document.getElementById('summaryRequired');
+
+        if (!project || !site || !type || !participantSection || !summaryRequired) return;
+
+        const selectedSite = site.value;
+
+        project.addEventListener('change', async () => {
+            site.innerHTML = '<option value="">-- Select Site --</option>';
+            if (!project.value) return;
+            const response = await fetch('@Url.Action("GetSitesByProject", "Activities")?projectId=' + project.value);
+            if (!response.ok) return;
+            const sites = await response.json();
+            sites.forEach(item => site.add(new Option(item.text, item.id)));
+        });
+
+        type.addEventListener('change', async () => {
+            if (!type.value) {
+                participantSection.classList.add('d-none');
+                summaryRequired.classList.add('d-none');
+                return;
+            }
+            const response = await fetch('@Url.Action("GetActivityTypeConfig", "Activities")?activityTypeId=' + type.value);
+            if (!response.ok) return;
+            const config = await response.json();
+            participantSection.classList.toggle('d-none', !config.requiresParticipants);
+            summaryRequired.classList.toggle('d-none', !config.requiresSummary);
+        });
+
+        document.querySelectorAll('.participant-input').forEach(input => input.addEventListener('input', updateTotal));
+        function updateTotal() {
+            const fields = ['Men', 'Women', 'Boys', 'Girls', 'ElderlyMen', 'ElderlyWomen'];
+            document.getElementById('totalParticipants').value = fields.reduce((total, field) => total + (Number(document.getElementById(field).value) || 0), 0);
+        }
+
+        if (project.value && selectedSite) site.value = selectedSite;
+        type.dispatchEvent(new Event('change'));
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeActivityForm);
+        } else {
+            initializeActivityForm();
+        }
+    })();
+</script>

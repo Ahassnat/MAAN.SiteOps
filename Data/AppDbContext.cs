@@ -88,14 +88,14 @@ public class AppDbContext : DbContext
         );
 
         modelBuilder.Entity<ActivityType>().HasData(
-            new ActivityType { Id = 1, ActivityCategoryId = 1, Code = "CAPACITY_STRENGTHENING", Name = "Capacity Strengthening for Community Members", DisplayOrder = 1, IsActive = true },
-            new ActivityType { Id = 2, ActivityCategoryId = 1, Code = "COMMUNITY_COMMITTEE_MEETING", Name = "Community or Committee Meeting", DisplayOrder = 2, IsActive = true },
-            new ActivityType { Id = 3, ActivityCategoryId = 2, Code = "SAFETY_AUDIT", Name = "Safety Audit", DisplayOrder = 1, IsActive = true },
-            new ActivityType { Id = 4, ActivityCategoryId = 3, Code = "ADVOCACY_REPORT", Name = "Advocacy Report", DisplayOrder = 1, IsActive = true },
-            new ActivityType { Id = 5, ActivityCategoryId = 3, Code = "AWARENESS_SESSION", Name = "Awareness Session", DisplayOrder = 2, IsActive = true },
-            new ActivityType { Id = 6, ActivityCategoryId = 2, Code = "SITE_IMPROVEMENT_PLAN", Name = "Site Improvement Plan", DisplayOrder = 2, IsActive = true },
-            new ActivityType { Id = 7, ActivityCategoryId = 4, Code = "SITE_IMPROVEMENTS_CARE_MAINTENANCE", Name = "Site Improvements, Care & Maintenance", DisplayOrder = 1, IsActive = true },
-            new ActivityType { Id = 8, ActivityCategoryId = 1, Code = "COMMUNITY_LED_ACTIVITY", Name = "Community-Led Activity", DisplayOrder = 3, IsActive = true }
+            new ActivityType { Id = 1, ActivityCategoryId = 1, Code = "CAPACITY_STRENGTHENING", Name = "Capacity Strengthening for Community Members", RequiresParticipants = true, DisplayOrder = 1, IsActive = true },
+            new ActivityType { Id = 2, ActivityCategoryId = 1, Code = "COMMUNITY_COMMITTEE_MEETING", Name = "Community or Committee Meeting", RequiresParticipants = true, DisplayOrder = 2, IsActive = true },
+            new ActivityType { Id = 3, ActivityCategoryId = 2, Code = "SAFETY_AUDIT", Name = "Safety Audit", RequiresParticipants = false, DisplayOrder = 1, IsActive = true },
+            new ActivityType { Id = 4, ActivityCategoryId = 3, Code = "ADVOCACY_REPORT", Name = "Advocacy Report", RequiresParticipants = false, DisplayOrder = 1, IsActive = true },
+            new ActivityType { Id = 5, ActivityCategoryId = 3, Code = "AWARENESS_SESSION", Name = "Awareness Session", RequiresParticipants = true, DisplayOrder = 2, IsActive = true },
+            new ActivityType { Id = 6, ActivityCategoryId = 2, Code = "SITE_IMPROVEMENT_PLAN", Name = "Site Improvement Plan", RequiresParticipants = false, DisplayOrder = 2, IsActive = true },
+            new ActivityType { Id = 7, ActivityCategoryId = 4, Code = "SITE_IMPROVEMENTS_CARE_MAINTENANCE", Name = "Site Improvements, Care & Maintenance", RequiresParticipants = true, DisplayOrder = 1, IsActive = true },
+            new ActivityType { Id = 8, ActivityCategoryId = 1, Code = "COMMUNITY_LED_ACTIVITY", Name = "Community-Led Activity", RequiresParticipants = true, DisplayOrder = 3, IsActive = true }
         );
     }
 }
