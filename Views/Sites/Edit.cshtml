@@ -4,12 +4,10 @@
     ViewData["Title"] = "Edit";
 }
 
-<h1>Edit</h1>
-
-<h4>Site</h4>
+<div class="page-header"><div><h2 class="page-title">Edit Site</h2><p class="page-subtitle">Update site information and operational status.</p></div></div>
 <hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-xl-8 col-lg-10">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />

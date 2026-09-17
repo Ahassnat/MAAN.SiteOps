@@ -1,71 +1,9 @@
 @model IEnumerable<MAAN.SiteOps.Models.Project>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Projects";
+    string StatusClass(string status) => status.ToLowerInvariant() switch { "active" => "status-approved", "completed" => "status-submitted", "cancelled" => "status-cancelled", _ => "status-draft" };
 }
-
-<h1>Index</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ProjectCode)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ProjectName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Donor)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.StartDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EndDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsActive)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.ProjectCode)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ProjectName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Donor)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.StartDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EndDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsActive)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<div class="page-header"><div><h2 class="page-title">Projects</h2><p class="page-subtitle">Manage donor-funded projects and their operational status.</p></div><a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Add Project</a></div>
+<div class="table-shell table-responsive"><table class="table"><thead><tr><th>Project Code</th><th>Project Name</th><th>Donor</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Active</th><th>Actions</th></tr></thead><tbody>
+@foreach (var item in Model) { <tr><td><strong>@item.ProjectCode</strong></td><td>@item.ProjectName</td><td>@item.Donor</td><td>@item.StartDate?.ToString("yyyy-MM-dd")</td><td>@item.EndDate?.ToString("yyyy-MM-dd")</td><td><span class="badge @StatusClass(item.Status)">@item.Status</span></td><td>@if (item.IsActive) { <span class="badge status-approved">Active</span> } else { <span class="badge status-draft">Inactive</span> }</td><td class="text-nowrap"><a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a> <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Details</a> <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a></td></tr> }
+</tbody></table></div>

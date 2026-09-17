@@ -4,11 +4,11 @@
     ViewData["Title"] = "Activities";
     string BadgeClass(string status) => status switch
     {
-        Activity.SubmittedStatus => "bg-warning text-dark",
-        Activity.ReturnedStatus => "bg-danger",
-        Activity.ApprovedStatus => "bg-success",
-        Activity.CancelledStatus => "bg-dark",
-        _ => "bg-secondary"
+        Activity.SubmittedStatus => "status-submitted",
+        Activity.ReturnedStatus => "status-returned",
+        Activity.ApprovedStatus => "status-approved",
+        Activity.CancelledStatus => "status-cancelled",
+        _ => "status-draft"
     };
     string RoleLabel(string role) => role switch
     {
@@ -21,22 +21,22 @@
     };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Activities</h1>
-    <a asp-action="Create" class="btn btn-primary">Create Activity</a>
+<div class="page-header">
+    <div><h2 class="page-title">Activities</h2><p class="page-subtitle">Record, review and track site management activities.</p></div>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Create Activity</a>
 </div>
 
-<form method="get" class="row g-2 mb-4">
+<form method="get" class="filter-card row g-3">
     <div class="col-md-3"><label class="form-label" for="ProjectId">Project</label><select name="ProjectId" id="ProjectId" class="form-select" asp-items="ViewBag.Projects"><option value="">All projects</option></select></div>
     <div class="col-md-3"><label class="form-label" for="ProjectSiteId">Site</label><select name="ProjectSiteId" id="ProjectSiteId" class="form-select" asp-items="ViewBag.Sites"><option value="">All sites</option></select></div>
     <div class="col-md-3"><label class="form-label" for="ActivityTypeId">Activity Type</label><select name="ActivityTypeId" id="ActivityTypeId" class="form-select" asp-items="ViewBag.ActivityTypes"><option value="">All types</option></select></div>
     <div class="col-md-3"><label class="form-label" for="Status">Status</label><select name="Status" id="Status" class="form-select" asp-items="ViewBag.Statuses"><option value="">All statuses</option></select></div>
     <div class="col-md-3"><label class="form-label" for="DateFrom">Date From</label><input type="date" name="DateFrom" id="DateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control" /></div>
     <div class="col-md-3"><label class="form-label" for="DateTo">Date To</label><input type="date" name="DateTo" id="DateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control" /></div>
-    <div class="col-md-6 d-flex align-items-end gap-2"><button class="btn btn-outline-primary" type="submit">Filter</button><a asp-action="Index" class="btn btn-outline-secondary">Clear</a></div>
+    <div class="col-md-6 d-flex align-items-end gap-2"><button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i> Apply Filters</button><a asp-action="Index" class="btn btn-outline-secondary">Clear</a></div>
 </form>
 
-<div class="table-responsive">
+<div class="table-shell table-responsive">
 <table class="table table-striped align-middle">
     <thead><tr><th>Date</th><th>Project</th><th>Site</th><th>Activity Type</th><th>Implementation Role</th><th>Total Participants</th><th>Status</th><th>Actions</th></tr></thead>
     <tbody>

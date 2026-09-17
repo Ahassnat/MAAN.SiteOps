@@ -4,23 +4,21 @@
     var canEdit = Model.Status is MAAN.SiteOps.Models.Activity.DraftStatus or MAAN.SiteOps.Models.Activity.ReturnedStatus;
 }
 
-<div class="d-flex justify-content-between align-items-center"><h1>Activity Details</h1><span class="badge @(Model.Status == "Approved" ? "bg-success" : Model.Status == "Returned" ? "bg-danger" : Model.Status == "Submitted" ? "bg-warning text-dark" : "bg-secondary")">@Model.Status</span></div>
-<hr />
+<div class="page-header"><div><h2 class="page-title">@Model.ActivityType?.Name</h2><p class="page-subtitle">@Model.ProjectSite?.Site?.SiteCode - @Model.ProjectSite?.Site?.SiteName</p></div><span class="badge @(Model.Status == "Approved" ? "status-approved" : Model.Status == "Returned" ? "status-returned" : Model.Status == "Submitted" ? "status-submitted" : Model.Status == "Cancelled" ? "status-cancelled" : "status-draft")">@Model.Status</span></div>
 @if (TempData["ActivityWarning"] is string warning)
 {
     <div class="alert alert-warning">@warning</div>
 }
-<dl class="row">
+<section class="section-card"><h3 class="section-heading">Activity Information</h3><dl class="row mb-0">
     <dt class="col-sm-3">Project</dt><dd class="col-sm-9">@Model.ProjectSite?.Project?.ProjectCode - @Model.ProjectSite?.Project?.ProjectName</dd>
     <dt class="col-sm-3">Site</dt><dd class="col-sm-9">@Model.ProjectSite?.Site?.SiteCode - @Model.ProjectSite?.Site?.SiteName</dd>
     <dt class="col-sm-3">Activity Date</dt><dd class="col-sm-9">@Model.ActivityDate.ToString("yyyy-MM-dd")</dd>
     <dt class="col-sm-3">Category</dt><dd class="col-sm-9">@Model.ActivityType?.ActivityCategory?.Name</dd>
     <dt class="col-sm-3">Activity Type</dt><dd class="col-sm-9">@Model.ActivityType?.Name</dd>
     <dt class="col-sm-3">Implementation Role</dt><dd class="col-sm-9">@Model.ImplementationRole</dd>
-</dl>
+</dl></section>
 
-<h4>Participants</h4>
-<dl class="row">
+<section class="section-card"><h3 class="section-heading">Participants</h3><dl class="row mb-0">
     <dt class="col-sm-3">Men</dt><dd class="col-sm-9">@(Model.Participant?.Men ?? 0)</dd>
     <dt class="col-sm-3">Women</dt><dd class="col-sm-9">@(Model.Participant?.Women ?? 0)</dd>
     <dt class="col-sm-3">Boys</dt><dd class="col-sm-9">@(Model.Participant?.Boys ?? 0)</dd>
@@ -29,18 +27,15 @@
     <dt class="col-sm-3">Elderly Women</dt><dd class="col-sm-9">@(Model.Participant?.ElderlyWomen ?? 0)</dd>
     <dt class="col-sm-3">Persons with Disabilities</dt><dd class="col-sm-9">@(Model.Participant?.PersonsWithDisabilities ?? 0)</dd>
     <dt class="col-sm-3">Total Participants</dt><dd class="col-sm-9">@(Model.Participant?.TotalParticipants ?? 0)</dd>
-</dl>
+</dl></section>
 
-<h4>Reporting</h4>
-<dl class="row"><dt class="col-sm-3">Summary</dt><dd class="col-sm-9">@Model.Summary</dd><dt class="col-sm-3">Notes</dt><dd class="col-sm-9">@Model.Notes</dd></dl>
+<section class="section-card"><h3 class="section-heading">Reporting Details</h3><dl class="row mb-0"><dt class="col-sm-3">Summary</dt><dd class="col-sm-9">@Model.Summary</dd><dt class="col-sm-3">Notes</dt><dd class="col-sm-9">@Model.Notes</dd></dl></section>
 
-<h4>Workflow Information</h4>
-<dl class="row"><dt class="col-sm-3">Created At</dt><dd class="col-sm-9">@Model.CreatedAt.ToLocalTime()</dd><dt class="col-sm-3">Submitted At</dt><dd class="col-sm-9">@Model.SubmittedAt?.ToLocalTime()</dd><dt class="col-sm-3">Reviewed At</dt><dd class="col-sm-9">@Model.ReviewedAt?.ToLocalTime()</dd><dt class="col-sm-3">Review Notes</dt><dd class="col-sm-9">@Model.ReviewNotes</dd></dl>
+<section class="section-card"><h3 class="section-heading">Workflow Information</h3><dl class="row mb-0"><dt class="col-sm-3">Created At</dt><dd class="col-sm-9">@Model.CreatedAt.ToLocalTime()</dd><dt class="col-sm-3">Submitted At</dt><dd class="col-sm-9">@Model.SubmittedAt?.ToLocalTime()</dd><dt class="col-sm-3">Reviewed At</dt><dd class="col-sm-9">@Model.ReviewedAt?.ToLocalTime()</dd><dt class="col-sm-3">Review Notes</dt><dd class="col-sm-9">@Model.ReviewNotes</dd></dl></section>
 
-<h4>Status History</h4>
-<table class="table table-sm"><thead><tr><th>Changed At</th><th>From</th><th>To</th><th>Comment</th></tr></thead><tbody>@foreach (var history in Model.StatusHistory.OrderByDescending(h => h.ChangedAt)) { <tr><td>@history.ChangedAt.ToLocalTime()</td><td>@history.OldStatus</td><td>@history.NewStatus</td><td>@history.Comment</td></tr> }</tbody></table>
+<section class="section-card"><h3 class="section-heading">Status History</h3><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Changed At</th><th>From</th><th>To</th><th>Comment</th></tr></thead><tbody>@foreach (var history in Model.StatusHistory.OrderByDescending(h => h.ChangedAt)) { <tr><td>@history.ChangedAt.ToLocalTime()</td><td>@history.OldStatus</td><td>@history.NewStatus</td><td>@history.Comment</td></tr> }</tbody></table></div></section>
 
-<div class="d-flex gap-2 flex-wrap">
+<div class="workflow-actions mt-4">
     @if (canEdit) { <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a><form asp-action="Submit" asp-route-id="@Model.Id" method="post"><button class="btn btn-warning" type="submit">Submit</button></form> }
     @if (Model.Status == MAAN.SiteOps.Models.Activity.DraftStatus) { <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a> }
     @if (Model.Status == MAAN.SiteOps.Models.Activity.SubmittedStatus) { <form asp-action="Approve" asp-route-id="@Model.Id" method="post"><button class="btn btn-success" type="submit">Approve</button></form> }

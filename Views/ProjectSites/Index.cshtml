@@ -1,58 +1,9 @@
 @model IEnumerable<MAAN.SiteOps.Models.ProjectSite>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Project Sites";
+    string CohortClass(string cohort) => cohort switch { "New" => "status-approved", "Existing" => "status-submitted", "Continued" => "status-draft", _ => "status-draft" };
 }
-
-<h1>Project Sites</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-   <thead>
-    <tr>
-        <th>Project</th>
-        <th>Site</th>
-        <th>Support Start</th>
-        <th>Support End</th>
-        <th>Site Cohort</th>
-        <th>Active</th>
-        <th>Notes</th>
-        <th></th>
-    </tr>
-</thead>
-   <tbody>
-@foreach (var item in Model)
-{
-    <tr>
-        <td>
-            @($"{item.Project?.ProjectCode} - {item.Project?.ProjectName}")
-        </td>
-        <td>
-            @($"{item.Site?.SiteCode} - {item.Site?.SiteName}")
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.SupportStartDate)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.SupportEndDate)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.SiteCohort)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.IsActive)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Notes)
-        </td>
-        <td>
-            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-            <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-            <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-        </td>
-    </tr>
-}
-</tbody>
-</table>
+<div class="page-header"><div><h2 class="page-title">Project Site Assignments</h2><p class="page-subtitle">Connect operational sites to the projects supporting them.</p></div><a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Assign Site</a></div>
+<div class="table-shell table-responsive"><table class="table"><thead><tr><th>Project</th><th>Site</th><th>Support Start</th><th>Support End</th><th>Site Cohort</th><th>Active</th><th>Notes</th><th>Actions</th></tr></thead><tbody>
+@foreach (var item in Model) { <tr><td><strong>@item.Project?.ProjectCode</strong></td><td>@item.Site?.SiteCode - @item.Site?.SiteName</td><td>@item.SupportStartDate?.ToString("yyyy-MM-dd")</td><td>@item.SupportEndDate?.ToString("yyyy-MM-dd")</td><td><span class="badge @CohortClass(item.SiteCohort)">@item.SiteCohort</span></td><td>@if (item.IsActive) { <span class="badge status-approved">Active</span> } else { <span class="badge status-draft">Inactive</span> }</td><td>@item.Notes</td><td class="text-nowrap"><a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a> <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Details</a> <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a></td></tr> }
+</tbody></table></div>

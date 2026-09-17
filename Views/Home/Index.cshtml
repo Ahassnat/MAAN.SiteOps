@@ -1,8 +1,52 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model MAAN.SiteOps.ViewModels.DashboardViewModel
+@using MAAN.SiteOps.Models
+@{
+    ViewData["Title"] = "Dashboard";
+    var maxStatus = Model.StatusCounts.Select(x => x.Count).DefaultIfEmpty(1).Max();
+    var maxType = Model.TypeCounts.Select(x => x.Count).DefaultIfEmpty(1).Max();
+    string StatusClass(string status) => status switch
+    {
+        Activity.SubmittedStatus => "status-submitted",
+        Activity.ReturnedStatus => "status-returned",
+        Activity.ApprovedStatus => "status-approved",
+        Activity.CancelledStatus => "status-cancelled",
+        _ => "status-draft"
+    };
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="page-header">
+    <div><h2 class="page-title">Dashboard</h2><p class="page-subtitle">Operational overview of MA'AN site management activities.</p></div>
+    <a asp-controller="Activities" asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Create Activity</a>
+</div>
+
+<div class="kpi-grid">
+    <div class="dashboard-card kpi-card"><i class="bi bi-clipboard-data kpi-icon"></i><div class="kpi-label">Total Activities</div><div class="kpi-value">@Model.TotalActivities</div></div>
+    <div class="dashboard-card kpi-card"><i class="bi bi-hourglass-split kpi-icon"></i><div class="kpi-label">Pending Review</div><div class="kpi-value">@Model.PendingReviewActivities</div></div>
+    <div class="dashboard-card kpi-card"><i class="bi bi-check2-circle kpi-icon"></i><div class="kpi-label">Approved</div><div class="kpi-value">@Model.ApprovedActivities</div></div>
+    <div class="dashboard-card kpi-card"><i class="bi bi-arrow-return-left kpi-icon"></i><div class="kpi-label">Returned</div><div class="kpi-value">@Model.ReturnedActivities</div></div>
+    <div class="dashboard-card kpi-card"><i class="bi bi-pencil-square kpi-icon"></i><div class="kpi-label">Draft</div><div class="kpi-value">@Model.DraftActivities</div></div>
+    <div class="dashboard-card kpi-card"><i class="bi bi-geo-alt kpi-icon"></i><div class="kpi-label">Active Sites</div><div class="kpi-value">@Model.ActiveSites</div></div>
+</div>
+
+<div class="dashboard-grid">
+    <section class="dashboard-card dashboard-section">
+        <h3 class="section-heading">Activity Status Overview</h3>
+        @if (Model.StatusCounts.Count == 0) { <div class="empty-state">No activities recorded yet.</div> }
+        else { foreach (var item in Model.StatusCounts.OrderBy(x => x.Status)) { <div class="metric-row"><span>@item.Status</span><div class="progress"><div class="progress-bar" style="width: @(item.Count * 100 / maxStatus)%"></div></div><strong>@item.Count</strong></div> } }
+    </section>
+    <section class="dashboard-card dashboard-section">
+        <h3 class="section-heading">Activities by Type</h3>
+        @if (Model.TypeCounts.Count == 0) { <div class="empty-state">No activity types have been used yet.</div> }
+        else { foreach (var item in Model.TypeCounts) { <div class="metric-row"><span title="@item.ActivityType">@item.ActivityType</span><div class="progress"><div class="progress-bar" style="width: @(item.Count * 100 / maxType)%"></div></div><strong>@item.Count</strong></div> } }
+    </section>
+    <section class="dashboard-card dashboard-section dashboard-section-wide">
+        <div class="d-flex justify-content-between align-items-center mb-2"><h3 class="section-heading mb-0">Recent Activities</h3><a asp-controller="Activities" asp-action="Index" class="small">View all</a></div>
+        @if (Model.RecentActivities.Count == 0) { <div class="empty-state">No activities recorded yet.</div> }
+        else { <div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Site</th><th>Activity Type</th><th>Status</th><th></th></tr></thead><tbody>@foreach (var item in Model.RecentActivities) { <tr><td>@item.ActivityDate.ToString("yyyy-MM-dd")</td><td>@item.ProjectSite?.Site?.SiteCode - @item.ProjectSite?.Site?.SiteName</td><td>@item.ActivityType?.Name</td><td><span class="badge @StatusClass(item.Status)">@item.Status</span></td><td class="text-end"><a asp-controller="Activities" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Details</a></td></tr> }</tbody></table></div> }
+    </section>
+    <section class="dashboard-card dashboard-section dashboard-section-wide">
+        <div class="d-flex justify-content-between align-items-center mb-2"><h3 class="section-heading mb-0">Pending Review</h3><span class="badge status-submitted">Submitted only</span></div>
+        @if (Model.PendingActivities.Count == 0) { <div class="empty-state">No activities pending review.</div> }
+        else { <div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Project</th><th>Site</th><th>Activity Type</th><th></th></tr></thead><tbody>@foreach (var item in Model.PendingActivities) { <tr><td>@item.ActivityDate.ToString("yyyy-MM-dd")</td><td>@item.ProjectSite?.Project?.ProjectCode</td><td>@item.ProjectSite?.Site?.SiteCode - @item.ProjectSite?.Site?.SiteName</td><td>@item.ActivityType?.Name</td><td class="text-end"><a asp-controller="Activities" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Review</a></td></tr> }</tbody></table></div> }
+    </section>
 </div>

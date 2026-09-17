@@ -1,79 +1,8 @@
 @model IEnumerable<MAAN.SiteOps.Models.Site>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Sites";
 }
-
-<h1>Index</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.SiteCode)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SiteName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Governorate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Area)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Latitude)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Longitude)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsActive)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsManagedByMaan)
-            </th>
-            
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.SiteCode)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SiteName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Governorate.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Area)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Latitude)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Longitude)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsActive)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsManagedByMaan)
-            </td>
-           
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<div class="page-header"><div><h2 class="page-title">Sites</h2><p class="page-subtitle">Maintain the shared site registry used across projects.</p></div><a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Add Site</a></div>
+<div class="table-shell table-responsive"><table class="table"><thead><tr><th>Site Code</th><th>Site Name</th><th>Governorate</th><th>Area</th><th>Active</th><th>Managed by MA'AN</th><th>Actions</th></tr></thead><tbody>
+@foreach (var item in Model) { <tr><td><strong>@item.SiteCode</strong></td><td>@item.SiteName</td><td>@item.Governorate?.Name</td><td>@item.Area</td><td>@if (item.IsActive) { <span class="badge status-approved">Active</span> } else { <span class="badge status-draft">Inactive</span> }</td><td>@if (item.IsManagedByMaan) { <span class="badge status-approved">Yes</span> } else { <span class="badge status-draft">No</span> }</td><td class="text-nowrap"><a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a> <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Details</a> <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a></td></tr> }
+</tbody></table></div>

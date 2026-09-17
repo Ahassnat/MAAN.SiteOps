@@ -11,6 +11,8 @@
     <input asp-for="Id" type="hidden" />
 }
 
+<section class="section-card">
+    <h3 class="section-heading">Activity Information</h3>
 <div class="row g-3">
     <div class="col-md-6">
         <label asp-for="ProjectId" class="form-label"></label>
@@ -44,10 +46,11 @@
         <span asp-validation-for="ImplementationRole" class="text-danger"></span>
     </div>
 </div>
+</section>
 
-<hr class="my-4" />
-<section id="participantSection" class="@(Model.ShowParticipants ? "" : "d-none")">
-    <h5>Participants</h5>
+<section id="participantSection" class="section-card @(Model.ShowParticipants ? "" : "d-none")">
+<h3 class="section-heading">Participants</h3>
+<div>
     <div class="row g-3">
         @foreach (var field in new[] { "Men", "Women", "Boys", "Girls", "ElderlyMen", "ElderlyWomen", "PersonsWithDisabilities" })
         {
@@ -74,9 +77,12 @@
             <small class="text-muted">PWD is reported separately and is not added to this total.</small>
         </div>
     </div>
+</div>
 </section>
 
-<div class="mt-4">
+<section class="section-card">
+<h3 class="section-heading">Reporting Details</h3>
+<div>
     <label asp-for="Summary" class="form-label">Summary <span id="summaryRequired" class="text-danger @(Model.SummaryRequired ? "" : "d-none")">*</span></label>
     <textarea asp-for="Summary" class="form-control" rows="4" id="Summary"></textarea>
     <span asp-validation-for="Summary" class="text-danger"></span>
@@ -86,6 +92,7 @@
     <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
     <span asp-validation-for="Notes" class="text-danger"></span>
 </div>
+</section>
 
 <script>
     (() => {
