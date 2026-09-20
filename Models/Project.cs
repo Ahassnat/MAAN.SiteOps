@@ -28,4 +28,10 @@ public class Project
 
     public ICollection<ProjectSite> ProjectSites { get; set; }
         = new List<ProjectSite>();
+
+    public ICollection<ProjectIndicator> ProjectIndicators { get; set; }
+        = new List<ProjectIndicator>();
+
+    public ICollection<ProjectReport> ProjectReports { get; set; }
+        = new List<ProjectReport>();
 }

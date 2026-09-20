@@ -33,4 +33,7 @@ public class ProjectSite
 
     [MaxLength(500)]
     public string? Notes { get; set; }
+
+    public ICollection<ActivityProjectAttribution> ActivityProjectAttributions { get; set; }
+        = new List<ActivityProjectAttribution>();
 }

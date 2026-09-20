@@ -1,0 +1,3 @@
+@model MAAN.SiteOps.Models.ReportDefinition
+@{ ViewData["Title"] = "Report Definition Details"; }
+<div class="page-header"><div><h2 class="page-title">@Model.Name</h2><p class="page-subtitle">@Model.Code</p></div></div><section class="section-card"><dl class="row mb-0"><dt class="col-sm-3">Frequency</dt><dd class="col-sm-9">@Model.Frequency</dd><dt class="col-sm-3">Description</dt><dd class="col-sm-9">@Model.Description</dd><dt class="col-sm-3">Active</dt><dd class="col-sm-9">@Model.IsActive</dd></dl></section><div class="form-actions"><a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a><a asp-action="Index" class="btn btn-outline-secondary">Back</a></div>

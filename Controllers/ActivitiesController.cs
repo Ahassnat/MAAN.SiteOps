@@ -104,6 +104,8 @@ public class ActivitiesController : Controller
             Status = Activity.DraftStatus
         };
 
+        EnsurePrimaryAttribution(activity);
+
         if (activityType!.RequiresParticipants)
             activity.Participant = ToParticipant(model);
 
@@ -145,6 +147,7 @@ public class ActivitiesController : Controller
 
         var activity = await _context.Activities
             .Include(a => a.Participant)
+            .Include(a => a.ProjectAttributions)
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (activity is null)
@@ -166,6 +169,7 @@ public class ActivitiesController : Controller
         }
 
         activity.ProjectSiteId = model.ProjectSiteId!.Value;
+        EnsurePrimaryAttribution(activity);
         activity.ActivityTypeId = model.ActivityTypeId!.Value;
         activity.ActivityDate = model.ActivityDate!.Value.Date;
         activity.ImplementationRole = model.ImplementationRole;
@@ -199,9 +203,41 @@ public class ActivitiesController : Controller
         var activity = await ActivitiesQuery()
             .Include(a => a.Participant)
             .Include(a => a.StatusHistory)
+            .Include(a => a.ProjectAttributions)
+                .ThenInclude(a => a.ProjectSite!)
+                    .ThenInclude(ps => ps.Project)
             .FirstOrDefaultAsync(a => a.Id == id);
 
-        return activity is null ? NotFound() : View(activity);
+        if (activity is null) return NotFound();
+        ViewBag.AdditionalProjectSites = await _context.ProjectSites
+            .Include(ps => ps.Project)
+            .Include(ps => ps.Site)
+            .Where(ps => ps.IsActive && ps.Site!.IsActive && ps.SiteId == activity.ProjectSite!.SiteId &&
+                         !activity.ProjectAttributions.Select(a => a.ProjectSiteId).Contains(ps.Id))
+            .OrderBy(ps => ps.Project!.ProjectCode)
+            .ToListAsync();
+        return View(activity);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddAttribution(int id, int projectSiteId, string? role, string? notes)
+    {
+        var activity = await _context.Activities.Include(a => a.ProjectSite).Include(a => a.ProjectAttributions).FirstOrDefaultAsync(a => a.Id == id);
+        var projectSite = await _context.ProjectSites.FirstOrDefaultAsync(ps => ps.Id == projectSiteId && ps.IsActive && ps.Site!.IsActive);
+        if (activity is null || projectSite is null) return NotFound();
+        if (projectSite.SiteId != activity.ProjectSite!.SiteId) return BadRequest("Additional attribution must use the same site.");
+        if (!activity.ProjectAttributions.Any(a => a.ProjectSiteId == projectSiteId))
+            activity.ProjectAttributions.Add(new ActivityProjectAttribution { ProjectSiteId = projectSiteId, IsPrimary = false, AttributionRole = role, Notes = notes });
+        await _context.SaveChangesAsync(); return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveAttribution(int id, int attributionId)
+    {
+        var attribution = await _context.ActivityProjectAttributions.FirstOrDefaultAsync(a => a.Id == attributionId && a.ActivityId == id);
+        if (attribution is null) return NotFound();
+        if (attribution.IsPrimary) return BadRequest("The primary attribution cannot be removed.");
+        _context.Remove(attribution); await _context.SaveChangesAsync(); return RedirectToAction(nameof(Details), new { id });
     }
 
     public async Task<IActionResult> Delete(int? id)
@@ -427,6 +463,26 @@ public class ActivitiesController : Controller
 
     private static bool CanEdit(Activity activity) =>
         activity.Status is Activity.DraftStatus or Activity.ReturnedStatus;
+
+    private static void EnsurePrimaryAttribution(Activity activity)
+    {
+        var primaryAttribution = activity.ProjectAttributions
+            .FirstOrDefault(attribution => attribution.ProjectSiteId == activity.ProjectSiteId);
+
+        if (primaryAttribution is null)
+        {
+            primaryAttribution = new ActivityProjectAttribution
+            {
+                ProjectSiteId = activity.ProjectSiteId,
+                IsPrimary = true,
+                AttributionRole = "Primary"
+            };
+            activity.ProjectAttributions.Add(primaryAttribution);
+        }
+
+        foreach (var attribution in activity.ProjectAttributions)
+            attribution.IsPrimary = attribution == primaryAttribution;
+    }
 
     private static ActivityParticipant ToParticipant(ActivityFormViewModel model) => new()
     {

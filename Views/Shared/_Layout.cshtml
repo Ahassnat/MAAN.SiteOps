@@ -31,6 +31,11 @@
                 <a class="sidebar-link @(IsActive("Projects") ? "active" : "")" asp-controller="Projects" asp-action="Index"><i class="bi bi-folder2-open"></i><span>Projects</span></a>
                 <a class="sidebar-link @(IsActive("Sites") ? "active" : "")" asp-controller="Sites" asp-action="Index"><i class="bi bi-geo-alt-fill"></i><span>Sites</span></a>
                 <a class="sidebar-link @(IsActive("ProjectSites") ? "active" : "")" asp-controller="ProjectSites" asp-action="Index"><i class="bi bi-diagram-3-fill"></i><span>Project Sites</span></a>
+                <div class="nav-section-label mt-4">Configuration</div>
+                <a class="sidebar-link @(IsActive("Indicators") ? "active" : "")" asp-controller="Indicators" asp-action="Index"><i class="bi bi-bar-chart-line"></i><span>Indicators</span></a>
+                <a class="sidebar-link @(IsActive("ActivityTypes") ? "active" : "")" asp-controller="ActivityTypes" asp-action="Index"><i class="bi bi-ui-checks-grid"></i><span>Activity Types</span></a>
+                <a class="sidebar-link @(IsActive("ActivityCategories") ? "active" : "")" asp-controller="ActivityCategories" asp-action="Index"><i class="bi bi-tags"></i><span>Activity Categories</span></a>
+                <a class="sidebar-link @(IsActive("ReportDefinitions") ? "active" : "")" asp-controller="ReportDefinitions" asp-action="Index"><i class="bi bi-file-earmark-bar-graph"></i><span>Report Definitions</span></a>
             </nav>
             <div class="sidebar-footer">MA'AN humanitarian operations</div>
         </aside>

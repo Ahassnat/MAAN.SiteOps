@@ -18,6 +18,13 @@
     <dt class="col-sm-3">Implementation Role</dt><dd class="col-sm-9">@Model.ImplementationRole</dd>
 </dl></section>
 
+<section class="section-card"><h3 class="section-heading">Project Attribution</h3>
+<div class="table-responsive"><table class="table"><thead><tr><th>Project</th><th>Site</th><th>Role</th><th>Primary</th><th></th></tr></thead><tbody>
+@foreach (var attribution in Model.ProjectAttributions.OrderByDescending(a => a.IsPrimary)) { <tr><td>@attribution.ProjectSite?.Project?.ProjectCode</td><td>@attribution.ProjectSite?.Site?.SiteCode - @attribution.ProjectSite?.Site?.SiteName</td><td>@attribution.AttributionRole</td><td>@(attribution.IsPrimary ? "Yes" : "No")</td><td>@if (!attribution.IsPrimary) { <form asp-action="RemoveAttribution" method="post"><input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="attributionId" value="@attribution.Id" /><button class="btn btn-sm btn-outline-danger">Remove</button></form> }</td></tr> }
+</tbody></table></div>
+@if (ViewBag.AdditionalProjectSites is IEnumerable<MAAN.SiteOps.Models.ProjectSite> options && options.Any()) { <form asp-action="AddAttribution" method="post" class="row g-2 align-items-end"><input type="hidden" name="id" value="@Model.Id" /><div class="col-md-5"><label class="form-label">Additional Project</label><select name="projectSiteId" class="form-select">@foreach (var option in options) { <option value="@option.Id">@option.Project?.ProjectCode - @option.Site?.SiteCode</option> }</select></div><div class="col-md-3"><label class="form-label">Role</label><input name="role" class="form-control" /></div><div class="col-md-3"><label class="form-label">Notes</label><input name="notes" class="form-control" /></div><div class="col-md-1"><button class="btn btn-primary">Add</button></div></form> }
+</section>
+
 <section class="section-card"><h3 class="section-heading">Participants</h3><dl class="row mb-0">
     <dt class="col-sm-3">Men</dt><dd class="col-sm-9">@(Model.Participant?.Men ?? 0)</dd>
     <dt class="col-sm-3">Women</dt><dd class="col-sm-9">@(Model.Participant?.Women ?? 0)</dd>

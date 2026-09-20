@@ -67,4 +67,13 @@ public class Activity
 
     public ICollection<ActivityStatusHistory> StatusHistory { get; set; }
         = new List<ActivityStatusHistory>();
+
+    public ICollection<ActivityProjectAttribution> ProjectAttributions { get; set; }
+        = new List<ActivityProjectAttribution>();
+
+    public ICollection<ActivityIndicatorContribution> IndicatorContributions { get; set; }
+        = new List<ActivityIndicatorContribution>();
+
+    public ICollection<ActivitySourceRecord> SourceRecords { get; set; }
+        = new List<ActivitySourceRecord>();
 }
