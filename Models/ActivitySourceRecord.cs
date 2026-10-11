@@ -33,6 +33,12 @@ public class ActivitySourceRecord
     [MaxLength(200)]
     public string? SourceActivityType { get; set; }
 
+    [Required]
+    [MaxLength(40)]
+    public string ProcessingStatus { get; set; } = "NeedsReview";
+
+    public string? WarningsJson { get; set; }
+
     [MaxLength(100)]
     public string? SourceDonorLabel { get; set; }
 

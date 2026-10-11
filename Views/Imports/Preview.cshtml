@@ -27,6 +27,14 @@ else
         <div class="dashboard-card kpi-card"><div class="kpi-label">Possible Duplicates</div><div class="kpi-value">@Model.PossibleDuplicates</div></div>
         <div class="dashboard-card kpi-card"><div class="kpi-label">Already Imported</div><div class="kpi-value">@Model.AlreadyImported</div></div>
     </div>
+    @if (Model.BatchId > 0 && Model.Records.Count > 0 && !Model.SourceImportCompleted)
+    {
+        <div class="alert alert-info d-flex justify-content-between align-items-center"><span>This action stores ZITE source rows only. It does not create Activities or assign Projects.</span><form asp-action="ImportActivitySourceRecords" method="post"><input type="hidden" name="previewToken" value="@Model.SourceImportToken" /><button class="btn btn-primary" type="submit">Import Source Records</button></form></div>
+    }
+    @if (Model.SourceImportCompleted)
+    {
+        <div class="alert alert-success">Source record import completed. Activities Created = 0.</div>
+    }
 
     <section class="section-card mb-4">
         <h3 class="section-heading">Warning Summary</h3>

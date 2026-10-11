@@ -296,6 +296,13 @@ namespace MAAN.SiteOps.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ProcessingStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("NeedsReview");
+
                     b.Property<string>("RawPayloadJson")
                         .HasColumnType("TEXT");
 
@@ -324,6 +331,9 @@ namespace MAAN.SiteOps.Migrations
 
                     b.Property<int>("SourceSystemId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("WarningsJson")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 

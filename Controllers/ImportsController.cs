@@ -57,13 +57,164 @@ public class ImportsController : Controller
             Status = "Preview",
             TotalRecords = preview.RecordsRead,
             LinkedRecords = preview.ReadyForImport,
-            SkippedRecords = preview.UnresolvedSites + preview.UnresolvedActivityTypes,
+            SkippedRecords = preview.UnresolvedSites + preview.UnresolvedActivityTypes + preview.AlreadyImported,
             ErrorRecords = preview.RecordsWithWarnings
         };
         _context.ImportBatches.Add(batch);
         await _context.SaveChangesAsync(cancellationToken);
         preview.BatchId = batch.Id;
+        preview.SourceImportToken = _sitePreviewStore.SaveActivityPreview(new ActivitySourceImportPreview(
+            batch.Id,
+            source.Id,
+            file.FileName,
+            preview.Records.Select(row => new ActivitySourcePreviewRow(
+                row.RowNumber,
+                row.ExternalRecordId,
+                row.RecordHash,
+                row.SourceSiteCode,
+                row.SourceSiteName,
+                row.MatchedSiteId,
+                row.SourceActivityType,
+                row.MatchedActivityTypeId,
+                row.ActivityDate,
+                row.SourceDonorLabel,
+                row.Men,
+                row.Women,
+                row.Boys,
+                row.Girls,
+                row.ElderlyMen,
+                row.ElderlyWomen,
+                row.PersonsWithDisabilities,
+                row.SourceTotalParticipants,
+                row.ParticipantsTotal,
+                row.Summary,
+                row.Notes,
+                row.Agency,
+                row.SourceActivityCategory,
+                row.SourceTopic,
+                row.Warnings.ToList(),
+                row.DuplicateStatus,
+                row.ReadyForImport)).ToList()));
+        preview.AlreadyImported = preview.Records.Count(row => row.DuplicateStatus == "AlreadyImported");
+        preview.ReadyForImport = preview.Records.Count(row => row.ReadyForImport && row.DuplicateStatus != "AlreadyImported");
+        batch.LinkedRecords = preview.ReadyForImport;
+        batch.SkippedRecords = preview.UnresolvedSites + preview.UnresolvedActivityTypes + preview.AlreadyImported;
+        await _context.SaveChangesAsync(cancellationToken);
         return View(preview);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ImportActivitySourceRecords(Guid previewToken, CancellationToken cancellationToken)
+    {
+        if (!_sitePreviewStore.RemoveActivityPreview(previewToken, out var snapshot) || snapshot is null)
+        {
+            TempData["ImportError"] = "This Activity Report preview expired. Upload and preview the workbook again.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var batch = await _context.ImportBatches.FindAsync([snapshot.BatchId], cancellationToken);
+        if (batch is null) return NotFound();
+
+        var imported = 0;
+        var alreadyImported = 0;
+        var ready = 0;
+        var needsReview = 0;
+        var errors = 0;
+        var exactSourceDuplicates = snapshot.Rows.Count(row => row.DuplicateStatus == "ExactSourceDuplicate");
+        var seenExternalIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var seenRecordHashes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var row in snapshot.Rows)
+        {
+            var duplicateExists = !string.IsNullOrWhiteSpace(row.ExternalRecordId)
+            ? !seenExternalIds.Add(row.ExternalRecordId) || await _context.ActivitySourceRecords.AnyAsync(x => x.SourceSystemId == snapshot.SourceSystemId && x.ExternalRecordId == row.ExternalRecordId, cancellationToken)
+            : !string.IsNullOrWhiteSpace(row.RecordHash) && (!seenRecordHashes.Add(row.RecordHash) || await _context.ActivitySourceRecords.AnyAsync(x => x.SourceSystemId == snapshot.SourceSystemId && x.ExternalRecordId == null && x.RecordHash == row.RecordHash, cancellationToken));
+
+            if (duplicateExists)
+            {
+                alreadyImported++;
+                continue;
+            }
+
+            var status = row.IsReady && row.Warnings.Count == 0 && row.DuplicateStatus == "NoDuplicateDetected"
+                ? "ReadyForNormalization"
+                : "NeedsReview";
+            if (status == "ReadyForNormalization") ready++; else needsReview++;
+
+            var rawPayload = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                row.ExternalRecordId,
+                row.SourceSiteCode,
+                row.SourceSiteName,
+                row.SourceActivityType,
+                row.ActivityCategory,
+                row.Agency,
+                SourceDonorLabel = row.SourceDonorLabel,
+                row.SourceDate,
+                row.Men,
+                row.Women,
+                row.Boys,
+                row.Girls,
+                row.ElderlyMen,
+                row.ElderlyWomen,
+                row.PersonsWithDisabilities,
+                row.SourceTotalParticipants,
+                row.ParticipantsTotal,
+                row.Summary,
+                row.Notes,
+                row.Warnings,
+                row.DuplicateStatus
+            });
+
+            _context.ActivitySourceRecords.Add(new Models.ActivitySourceRecord
+            {
+                SourceSystemId = snapshot.SourceSystemId,
+                ImportBatchId = snapshot.BatchId,
+                ActivityId = null,
+                ExternalRecordId = row.ExternalRecordId,
+                RecordHash = row.RecordHash,
+                SourceSiteCode = row.SourceSiteCode,
+                SourceActivityType = row.SourceActivityType,
+                SourceDonorLabel = row.SourceDonorLabel,
+                SourceDate = row.SourceDate,
+                ImportedAt = DateTime.UtcNow,
+                RawPayloadJson = rawPayload,
+                Notes = row.Warnings.Count == 0 ? null : string.Join("; ", row.Warnings),
+                ProcessingStatus = status,
+                WarningsJson = row.Warnings.Count == 0 ? null : System.Text.Json.JsonSerializer.Serialize(row.Warnings)
+            });
+            imported++;
+        }
+
+        batch.Status = "Completed";
+        batch.CompletedAt = DateTime.UtcNow;
+        batch.TotalRecords = snapshot.Rows.Count;
+        batch.LinkedRecords = imported;
+        batch.SkippedRecords = alreadyImported;
+        batch.ErrorRecords = errors;
+        batch.Notes = $"ZITE Activity Report source ingestion. Imported {imported}; ready for normalization {ready}; needs review {needsReview}; already imported/skipped {alreadyImported}; errors {errors}; Activities created: 0.";
+        await _context.SaveChangesAsync(cancellationToken);
+
+        TempData["SourceImportResult"] = System.Text.Json.JsonSerializer.Serialize(new SourceRecordImportResultViewModel
+        {
+            BatchId = batch.Id,
+            SourceRecordsRead = snapshot.Rows.Count,
+            SourceRecordsImported = imported,
+            AlreadyImportedOrSkipped = alreadyImported,
+            ExactSourceDuplicates = exactSourceDuplicates,
+            ReadyForNormalization = ready,
+            NeedsReview = needsReview,
+            Errors = errors,
+            ActivitiesCreated = 0
+        });
+        return RedirectToAction(nameof(SourceImportResult));
+    }
+
+    public IActionResult SourceImportResult()
+    {
+        var json = TempData["SourceImportResult"] as string;
+        if (string.IsNullOrWhiteSpace(json)) return RedirectToAction(nameof(Index));
+        return View(System.Text.Json.JsonSerializer.Deserialize<SourceRecordImportResultViewModel>(json)!);
     }
 
     public async Task<IActionResult> ResolveHistoricalSite(string? siteCode, string? siteName, int activityRecordCount, DateTime? earliestActivityDate, DateTime? latestActivityDate)

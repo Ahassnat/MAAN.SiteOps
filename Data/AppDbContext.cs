@@ -146,6 +146,10 @@ public class AppDbContext : DbContext
             .HasIndex(asr => new { asr.SourceSystemId, asr.ExternalRecordId });
 
         modelBuilder.Entity<ActivitySourceRecord>()
+            .Property(asr => asr.ProcessingStatus)
+            .HasDefaultValue("NeedsReview");
+
+        modelBuilder.Entity<ActivitySourceRecord>()
             .HasOne(asr => asr.SourceSystem)
             .WithMany(ss => ss.ActivitySourceRecords)
             .HasForeignKey(asr => asr.SourceSystemId)

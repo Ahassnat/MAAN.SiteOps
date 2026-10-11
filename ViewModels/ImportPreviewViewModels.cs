@@ -25,6 +25,13 @@ public class ImportPreviewViewModel
     public int TotalUniqueUnresolvedSites { get; set; }
     public List<UnresolvedActivitySiteViewModel> UnresolvedSiteSummary { get; set; } = [];
     public int BatchId { get; set; }
+    public Guid SourceImportToken { get; set; }
+    public int SourceRecordsImported { get; set; }
+    public int SourceRecordsReady { get; set; }
+    public int SourceRecordsNeedsReview { get; set; }
+    public int SourceRecordsAlreadyImported { get; set; }
+    public int SourceImportErrors { get; set; }
+    public bool SourceImportCompleted { get; set; }
     public List<ImportPreviewRecordViewModel> Records { get; set; } = [];
 }
 
@@ -94,4 +101,17 @@ public class ImportWarningSummaryViewModel
 {
     public string Reason { get; set; } = string.Empty;
     public int Count { get; set; }
+}
+
+public class SourceRecordImportResultViewModel
+{
+    public int BatchId { get; set; }
+    public int SourceRecordsRead { get; set; }
+    public int SourceRecordsImported { get; set; }
+    public int AlreadyImportedOrSkipped { get; set; }
+    public int ExactSourceDuplicates { get; set; }
+    public int ReadyForNormalization { get; set; }
+    public int NeedsReview { get; set; }
+    public int Errors { get; set; }
+    public int ActivitiesCreated { get; set; }
 }

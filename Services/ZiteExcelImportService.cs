@@ -30,7 +30,8 @@ public sealed class ZiteExcelImportService : IDataImportService
             var types = await _context.ActivityTypes.AsNoTracking().Where(x => x.IsActive).ToListAsync(cancellationToken);
             var source = await _context.SourceSystems.AsNoTracking().FirstOrDefaultAsync(x => x.Code == sourceSystemCode, cancellationToken);
             var importedIds = source is null ? [] : (await _context.ActivitySourceRecords.AsNoTracking().Where(x => x.SourceSystemId == source.Id && x.ExternalRecordId != null).Select(x => x.ExternalRecordId!).ToListAsync(cancellationToken)).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var records = used.RowsUsed().Skip(1).Select((row, index) => ParseRow(row, headers, sites, types, importedIds, index + 2)).ToList();
+            var importedHashes = source is null ? [] : (await _context.ActivitySourceRecords.AsNoTracking().Where(x => x.SourceSystemId == source.Id && x.ExternalRecordId == null && x.RecordHash != null).Select(x => x.RecordHash!).ToListAsync(cancellationToken)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var records = used.RowsUsed().Skip(1).Select((row, index) => ParseRow(row, headers, sites, types, importedIds, importedHashes, index + 2)).ToList();
             MarkDuplicateGroups(records);
             result.DuplicateReviewGroups = BuildDuplicateReviewGroups(records);
             result.Records = records;
@@ -220,7 +221,7 @@ public sealed class ZiteExcelImportService : IDataImportService
         return imported;
     }
 
-    private static ImportPreviewRecordViewModel ParseRow(IXLRangeRow row, Dictionary<string, int> headers, List<Site> sites, List<ActivityType> types, HashSet<string> importedIds, int rowNumber)
+    private static ImportPreviewRecordViewModel ParseRow(IXLRangeRow row, Dictionary<string, int> headers, List<Site> sites, List<ActivityType> types, HashSet<string> importedIds, HashSet<string> importedHashes, int rowNumber)
     {
         string Value(params string[] names) => names.Select(Normalize).Where(headers.ContainsKey).Select(name => row.Cell(headers[name]).GetString().Trim()).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty;
         var sourceCode = Value("Site ID", "SiteCode");
@@ -263,7 +264,9 @@ public sealed class ZiteExcelImportService : IDataImportService
         if (!datePresent) item.Warnings.Add("Activity Date is missing");
         else if (!date.HasValue) item.Warnings.Add("Activity Date could not be parsed");
         else if (date.Value.Date > DateTime.Today) item.Warnings.Add("Activity Date is in the future");
-        if (!string.IsNullOrWhiteSpace(externalId) && importedIds.Contains(externalId)) item.DuplicateStatus = "AlreadyImported";
+        if ((!string.IsNullOrWhiteSpace(externalId) && importedIds.Contains(externalId)) ||
+            (string.IsNullOrWhiteSpace(externalId) && !string.IsNullOrWhiteSpace(item.RecordHash) && importedHashes.Contains(item.RecordHash)))
+            item.DuplicateStatus = "AlreadyImported";
         return item;
     }
 
