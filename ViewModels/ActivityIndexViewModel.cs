@@ -10,6 +10,8 @@ public class ActivityIndexViewModel
 
     public int? ProjectSiteId { get; set; }
 
+    public int? SiteId { get; set; }
+
     public int? ActivityTypeId { get; set; }
 
     public string? Status { get; set; }

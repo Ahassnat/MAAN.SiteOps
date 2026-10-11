@@ -18,8 +18,13 @@ public class Activity
 
     public int Id { get; set; }
 
+    [Display(Name = "Site")]
+    public int SiteId { get; set; }
+
+    public Site? Site { get; set; }
+
     [Display(Name = "Project Site")]
-    public int ProjectSiteId { get; set; }
+    public int? ProjectSiteId { get; set; }
 
     public ProjectSite? ProjectSite { get; set; }
 

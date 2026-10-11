@@ -45,6 +45,9 @@ public class ActivitiesController : Controller
         if (filters.ProjectSiteId.HasValue)
             query = query.Where(a => a.ProjectSiteId == filters.ProjectSiteId.Value);
 
+        if (filters.SiteId.HasValue)
+            query = query.Where(a => a.SiteId == filters.SiteId.Value);
+
         if (filters.ActivityTypeId.HasValue)
             query = query.Where(a => a.ActivityTypeId == filters.ActivityTypeId.Value);
 
@@ -62,7 +65,7 @@ public class ActivitiesController : Controller
             .ThenByDescending(a => a.Id)
             .ToListAsync();
 
-        await LoadFilterOptions(filters.ProjectId, filters.ProjectSiteId);
+        await LoadFilterOptions(filters.ProjectId, filters.ProjectSiteId, filters.SiteId);
         return View(filters);
     }
 
@@ -95,6 +98,7 @@ public class ActivitiesController : Controller
 
         var activity = new Activity
         {
+            SiteId = await _context.ProjectSites.Where(ps => ps.Id == model.ProjectSiteId!.Value).Select(ps => ps.SiteId).SingleAsync(),
             ProjectSiteId = model.ProjectSiteId!.Value,
             ActivityTypeId = model.ActivityTypeId!.Value,
             ActivityDate = model.ActivityDate!.Value.Date,
@@ -169,6 +173,7 @@ public class ActivitiesController : Controller
         }
 
         activity.ProjectSiteId = model.ProjectSiteId!.Value;
+        activity.SiteId = await _context.ProjectSites.Where(ps => ps.Id == model.ProjectSiteId.Value).Select(ps => ps.SiteId).SingleAsync();
         EnsurePrimaryAttribution(activity);
         activity.ActivityTypeId = model.ActivityTypeId!.Value;
         activity.ActivityDate = model.ActivityDate!.Value.Date;
@@ -203,17 +208,22 @@ public class ActivitiesController : Controller
         var activity = await ActivitiesQuery()
             .Include(a => a.Participant)
             .Include(a => a.StatusHistory)
+            .Include(a => a.Site)
             .Include(a => a.ProjectAttributions)
                 .ThenInclude(a => a.ProjectSite!)
                     .ThenInclude(ps => ps.Project)
+            .Include(a => a.ProjectAttributions)
+                .ThenInclude(a => a.ProjectSite!)
+                    .ThenInclude(ps => ps.Site)
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (activity is null) return NotFound();
         ViewBag.AdditionalProjectSites = await _context.ProjectSites
             .Include(ps => ps.Project)
             .Include(ps => ps.Site)
-            .Where(ps => ps.IsActive && ps.Site!.IsActive && ps.SiteId == activity.ProjectSite!.SiteId &&
+            .Where(ps => ps.IsActive && ps.Site!.IsActive && ps.SiteId == activity.SiteId &&
                          !activity.ProjectAttributions.Select(a => a.ProjectSiteId).Contains(ps.Id))
+            .Where(ps => ps.Id != activity.ProjectSiteId)
             .OrderBy(ps => ps.Project!.ProjectCode)
             .ToListAsync();
         return View(activity);
@@ -222,12 +232,16 @@ public class ActivitiesController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> AddAttribution(int id, int projectSiteId, string? role, string? notes)
     {
-        var activity = await _context.Activities.Include(a => a.ProjectSite).Include(a => a.ProjectAttributions).FirstOrDefaultAsync(a => a.Id == id);
+        var activity = await _context.Activities.Include(a => a.Site).Include(a => a.ProjectAttributions).FirstOrDefaultAsync(a => a.Id == id);
         var projectSite = await _context.ProjectSites.FirstOrDefaultAsync(ps => ps.Id == projectSiteId && ps.IsActive && ps.Site!.IsActive);
         if (activity is null || projectSite is null) return NotFound();
-        if (projectSite.SiteId != activity.ProjectSite!.SiteId) return BadRequest("Additional attribution must use the same site.");
+        if (projectSite.SiteId != activity.SiteId) return BadRequest("Additional attribution must use the same site.");
         if (!activity.ProjectAttributions.Any(a => a.ProjectSiteId == projectSiteId))
-            activity.ProjectAttributions.Add(new ActivityProjectAttribution { ProjectSiteId = projectSiteId, IsPrimary = false, AttributionRole = role, Notes = notes });
+        {
+            var makePrimary = activity.ProjectSiteId is null;
+            activity.ProjectAttributions.Add(new ActivityProjectAttribution { ProjectSiteId = projectSiteId, IsPrimary = makePrimary, AttributionRole = role, Notes = notes });
+            if (makePrimary) activity.ProjectSiteId = projectSiteId;
+        }
         await _context.SaveChangesAsync(); return RedirectToAction(nameof(Details), new { id });
     }
 
@@ -319,6 +333,7 @@ public class ActivitiesController : Controller
     private IQueryable<Activity> ActivitiesQuery() => _context.Activities
         .AsNoTracking()
         .Include(a => a.Participant)
+        .Include(a => a.Site)
         .Include(a => a.ProjectSite!)
             .ThenInclude(ps => ps.Project)
         .Include(a => a.ProjectSite!)
@@ -435,7 +450,7 @@ public class ActivitiesController : Controller
             ImplementationRoles.Select(r => new { Value = r.Key, Text = r.Value }), "Value", "Text");
     }
 
-    private async Task LoadFilterOptions(int? projectId, int? projectSiteId)
+    private async Task LoadFilterOptions(int? projectId, int? projectSiteId, int? siteId)
     {
         ViewBag.Projects = new SelectList(
             await _context.Projects.Where(p => p.IsActive).OrderBy(p => p.ProjectCode).ToListAsync(),
@@ -453,6 +468,7 @@ public class ActivitiesController : Controller
             await _context.ActivityTypes.Where(t => t.IsActive).OrderBy(t => t.Name).ToListAsync(),
             nameof(ActivityType.Id), nameof(ActivityType.Name));
         ViewBag.Statuses = new SelectList(Statuses);
+        ViewBag.SiteFilter = new SelectList(await _context.Sites.AsNoTracking().OrderBy(s => s.SiteCode).ToListAsync(), nameof(Site.Id), nameof(Site.SiteCode), siteId);
     }
 
     private IQueryable<ProjectSite> ActiveProjectSites(int? projectId) => _context.ProjectSites
@@ -466,14 +482,21 @@ public class ActivitiesController : Controller
 
     private static void EnsurePrimaryAttribution(Activity activity)
     {
+        if (activity.ProjectSiteId is null)
+        {
+            foreach (var attribution in activity.ProjectAttributions)
+                attribution.IsPrimary = false;
+            return;
+        }
+
         var primaryAttribution = activity.ProjectAttributions
-            .FirstOrDefault(attribution => attribution.ProjectSiteId == activity.ProjectSiteId);
+            .FirstOrDefault(attribution => attribution.ProjectSiteId == activity.ProjectSiteId.Value);
 
         if (primaryAttribution is null)
         {
             primaryAttribution = new ActivityProjectAttribution
             {
-                ProjectSiteId = activity.ProjectSiteId,
+                ProjectSiteId = activity.ProjectSiteId.Value,
                 IsPrimary = true,
                 AttributionRole = "Primary"
             };
@@ -514,6 +537,7 @@ public class ActivitiesController : Controller
             Id = activity.Id,
             ProjectId = activity.ProjectSite?.ProjectId,
             ProjectSiteId = activity.ProjectSiteId,
+            SiteId = activity.SiteId,
             ActivityTypeId = activity.ActivityTypeId,
             ActivityDate = activity.ActivityDate,
             ImplementationRole = activity.ImplementationRole,

@@ -61,6 +61,12 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Activity>()
+            .HasOne(a => a.Site)
+            .WithMany(s => s.Activities)
+            .HasForeignKey(a => a.SiteId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Activity>()
             .HasOne(a => a.ActivityType)
             .WithMany(at => at.Activities)
             .HasForeignKey(a => a.ActivityTypeId)

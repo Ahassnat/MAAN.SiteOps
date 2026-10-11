@@ -166,20 +166,30 @@ public sealed class ReferenceDataInitializer
         CancellationToken cancellationToken)
     {
         var activities = await context.Activities
+            .Include(activity => activity.ProjectSite)
             .Include(activity => activity.ProjectAttributions)
             .ToListAsync(cancellationToken);
 
         foreach (var activity in activities)
         {
+            activity.SiteId = activity.ProjectSite?.SiteId ?? activity.SiteId;
+
+            if (activity.ProjectSiteId is null)
+            {
+                foreach (var attribution in activity.ProjectAttributions)
+                    attribution.IsPrimary = false;
+                continue;
+            }
+
             var primaryAttribution = activity.ProjectAttributions
-                .FirstOrDefault(attribution => attribution.ProjectSiteId == activity.ProjectSiteId);
+                .FirstOrDefault(attribution => attribution.ProjectSiteId == activity.ProjectSiteId.Value);
 
             if (primaryAttribution is null)
             {
                 primaryAttribution = new ActivityProjectAttribution
                 {
                     ActivityId = activity.Id,
-                    ProjectSiteId = activity.ProjectSiteId,
+                    ProjectSiteId = activity.ProjectSiteId.Value,
                     IsPrimary = true,
                     AttributionRole = "Primary"
                 };

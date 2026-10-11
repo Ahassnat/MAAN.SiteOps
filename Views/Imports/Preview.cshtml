@@ -1,5 +1,149 @@
 @model MAAN.SiteOps.ViewModels.ImportPreviewViewModel
-@{ ViewData["Title"] = "Import Preview"; string Badge(string status) => status switch { "Ready" => "status-approved", "Warning" => "status-submitted", "Duplicate" => "status-returned", _ => "status-draft" }; }
-<div class="page-header"><div><h2 class="page-title">Import Preview</h2><p class="page-subtitle">@Model.FileName · @Model.DetectedSheet</p></div><a asp-action="Index" class="btn btn-outline-secondary">Back to Imports</a></div>
-@if (!string.IsNullOrWhiteSpace(Model.Error)) { <div class="alert alert-danger">@Model.Error</div> } else { <div class="kpi-grid"><div class="dashboard-card kpi-card"><div class="kpi-label">Records Read</div><div class="kpi-value">@Model.RecordsRead</div></div><div class="dashboard-card kpi-card"><div class="kpi-label">Ready for Import</div><div class="kpi-value">@Model.ReadyForImport</div></div><div class="dashboard-card kpi-card"><div class="kpi-label">Unresolved Sites</div><div class="kpi-value">@Model.UnresolvedSites</div></div><div class="dashboard-card kpi-card"><div class="kpi-label">Unresolved Types</div><div class="kpi-value">@Model.UnresolvedActivityTypes</div></div><div class="dashboard-card kpi-card"><div class="kpi-label">Possible Duplicates</div><div class="kpi-value">@Model.PossibleDuplicates</div></div><div class="dashboard-card kpi-card"><div class="kpi-label">Already Imported</div><div class="kpi-value">@Model.AlreadyImported</div></div></div><div class="filter-card d-flex gap-2"><button class="btn btn-sm btn-primary preview-filter" data-filter="All">All</button><button class="btn btn-sm btn-outline-secondary preview-filter" data-filter="Ready">Ready</button><button class="btn btn-sm btn-outline-secondary preview-filter" data-filter="Warning">Warnings</button><button class="btn btn-sm btn-outline-secondary preview-filter" data-filter="Unresolved">Unresolved</button><button class="btn btn-sm btn-outline-secondary preview-filter" data-filter="Duplicate">Duplicates</button></div><div class="table-shell table-responsive"><table class="table" id="previewTable"><thead><tr><th>Row</th><th>Date</th><th>Source Site</th><th>Matched Site</th><th>Source Activity Type</th><th>Matched Activity Type</th><th>Participants</th><th>Source Donor</th><th>Status</th><th>Warnings</th></tr></thead><tbody>@foreach (var item in Model.Records) { <tr data-status="@item.Status"><td>@item.RowNumber</td><td>@item.ActivityDate?.ToString("yyyy-MM-dd")</td><td>@item.SourceSiteCode<br /><small>@item.SourceSiteName</small></td><td>@item.MatchedSiteDisplay</td><td>@item.SourceActivityType</td><td>@item.MatchedActivityTypeName</td><td>@item.ParticipantsTotal</td><td>@item.SourceDonorLabel</td><td><span class="badge @Badge(item.Status)">@item.Status</span></td><td>@string.Join(" ", item.Warnings)</td></tr> }</tbody></table></div> }</div>
-@section Scripts { <script>document.querySelectorAll('.preview-filter').forEach(button => button.addEventListener('click', () => { const filter = button.dataset.filter; document.querySelectorAll('#previewTable tbody tr').forEach(row => row.style.display = filter === 'All' || row.dataset.status === filter ? '' : 'none'); }));</script> }
+@{
+    ViewData["Title"] = "Import Preview";
+    string Badge(string status) => status switch
+    {
+        "Ready" => "status-approved",
+        "Warning" => "status-submitted",
+        "Duplicate" => "status-returned",
+        _ => "status-draft"
+    };
+}
+<div class="page-header">
+    <div><h2 class="page-title">Import Preview</h2><p class="page-subtitle">@Model.FileName · @Model.DetectedSheet</p></div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to Imports</a>
+</div>
+@if (!string.IsNullOrWhiteSpace(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+else
+{
+    <div class="kpi-grid">
+        <div class="dashboard-card kpi-card"><div class="kpi-label">Records Read</div><div class="kpi-value">@Model.RecordsRead</div></div>
+        <div class="dashboard-card kpi-card"><div class="kpi-label">Ready for Import</div><div class="kpi-value">@Model.ReadyForImport</div></div>
+        <div class="dashboard-card kpi-card"><div class="kpi-label">Unresolved Sites</div><div class="kpi-value">@Model.UnresolvedSites</div></div>
+        <div class="dashboard-card kpi-card"><div class="kpi-label">Unresolved Types</div><div class="kpi-value">@Model.UnresolvedActivityTypes</div></div>
+        <div class="dashboard-card kpi-card"><div class="kpi-label">Possible Duplicates</div><div class="kpi-value">@Model.PossibleDuplicates</div></div>
+        <div class="dashboard-card kpi-card"><div class="kpi-label">Already Imported</div><div class="kpi-value">@Model.AlreadyImported</div></div>
+    </div>
+
+    <section class="section-card mb-4">
+        <h3 class="section-heading">Warning Summary</h3>
+        @if (Model.WarningSummary.Count == 0)
+        {
+            <div class="empty-state">No warnings in this preview.</div>
+        }
+        else
+        {
+            <div class="table-responsive"><table class="table"><thead><tr><th>Warning</th><th>Records</th></tr></thead><tbody>
+            @foreach (var warning in Model.WarningSummary)
+            {
+                <tr><td>@warning.Reason</td><td>@warning.Count</td></tr>
+            }
+            </tbody></table></div>
+        }
+    </section>
+
+    <section class="section-card mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="section-heading mb-0">Unresolved Site Summary</h3>
+            <span class="text-muted small">Review and resolve historical Sites</span>
+        </div>
+        <div class="d-flex gap-4 my-3">
+            <div><div class="kpi-label">Unresolved Activity Records</div><strong>@Model.TotalUnresolvedActivityRecords</strong></div>
+            <div><div class="kpi-label">Unique Unresolved Sites</div><strong>@Model.TotalUniqueUnresolvedSites</strong></div>
+        </div>
+        @if (Model.UnresolvedSiteSummary.Count == 0)
+        {
+            <div class="empty-state">No unresolved sites.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>SiteCode</th><th>SiteName</th><th>Activity Record Count</th><th>Earliest Activity Date</th><th>Latest Activity Date</th><th>Actions</th></tr></thead>
+                    <tbody>
+                    @foreach (var site in Model.UnresolvedSiteSummary)
+                    {
+                        <tr><td>@site.SiteCode</td><td>@site.SiteName</td><td>@site.ActivityRecordCount</td><td>@site.EarliestActivityDate?.ToString("yyyy-MM-dd")</td><td>@site.LatestActivityDate?.ToString("yyyy-MM-dd")</td><td><a asp-action="ResolveHistoricalSite" asp-route-siteCode="@site.SiteCode" asp-route-siteName="@site.SiteName" asp-route-activityRecordCount="@site.ActivityRecordCount" asp-route-earliestActivityDate="@site.EarliestActivityDate?.ToString("yyyy-MM-dd")" asp-route-latestActivityDate="@site.LatestActivityDate?.ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-primary">Resolve Site</a></td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="section-card mb-4" id="duplicateReview">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="section-heading mb-0">Possible Duplicate Review</h3>
+            <span class="text-muted small">Review only · no records are merged or removed</span>
+        </div>
+        <div class="d-flex gap-4 my-3">
+            <div><div class="kpi-label">Possible Duplicate Records</div><strong>@Model.PossibleDuplicateRecordCount</strong></div>
+            <div><div class="kpi-label">Unique Duplicate Groups</div><strong>@Model.DuplicateGroupCount</strong></div>
+            <div><div class="kpi-label">Exact Source Duplicate Records</div><strong>@Model.ExactSourceDuplicates</strong></div>
+        </div>
+        @if (Model.DuplicateReviewGroups.Count == 0)
+        {
+            <div class="empty-state">No duplicate review groups.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Group ID</th><th>Site Code</th><th>Site Name</th><th>Activity Type</th><th>Date</th><th>Records</th><th>Evidence</th><th>Classification</th><th>Details</th></tr></thead>
+                    <tbody>
+                    @foreach (var group in Model.DuplicateReviewGroups)
+                    {
+                        <tr>
+                            <td><strong>@group.GroupId</strong></td>
+                            <td>@group.SiteCode</td>
+                            <td>@group.SiteName</td>
+                            <td>@group.ActivityType</td>
+                            <td>@group.ActivityDate?.ToString("yyyy-MM-dd")</td>
+                            <td>@group.RecordCount</td>
+                            <td>@(group.HasExactSourceDuplicateEvidence ? "Exact Source Duplicate: repeated Case ID; " : "")@group.Reason</td>
+                            <td><select class="form-select form-select-sm duplicate-classification"><option selected>Needs Review</option><option>Genuine Duplicate</option><option>Separate Legitimate Activities</option><option>Multi-Day / Related Activity</option></select></td>
+                            <td><a class="btn btn-sm btn-outline-secondary" href="#@group.GroupId-details">Open</a></td>
+                        </tr>
+                        <tr><td colspan="9"><details id="@group.GroupId-details"><summary>@group.GroupId records (@group.RecordCount)</summary><div class="table-responsive mt-2"><table class="table table-sm"><thead><tr><th>Row</th><th>Case ID / ExternalRecordId</th><th>Date</th><th>Site</th><th>Source Activity Type</th><th>Summary</th><th>Notes / Comments</th><th>Men</th><th>Women</th><th>Boys</th><th>Girls</th><th>Elderly Men</th><th>Elderly Women</th><th>PWD</th><th>Source Total</th><th>Calculated Total</th><th>Category / Topic</th></tr></thead><tbody>
+                        @foreach (var record in group.Records)
+                        {
+                            <tr><td>@record.RowNumber</td><td>@record.ExternalRecordId</td><td>@record.ActivityDate?.ToString("yyyy-MM-dd")</td><td>@record.SourceSiteCode - @record.SourceSiteName</td><td>@record.SourceActivityType</td><td>@record.Summary</td><td>@record.Notes</td><td>@record.Men</td><td>@record.Women</td><td>@record.Boys</td><td>@record.Girls</td><td>@record.ElderlyMen</td><td>@record.ElderlyWomen</td><td>@record.PersonsWithDisabilities</td><td>@record.SourceTotalParticipants</td><td>@record.ParticipantsTotal</td><td>@record.SourceActivityCategory</td></tr>
+                        }
+                        </tbody></table></div></details></td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <div class="filter-card d-flex gap-2">
+        <button class="btn btn-sm btn-primary preview-filter" data-filter="All">All</button>
+        <button class="btn btn-sm btn-outline-secondary preview-filter" data-filter="Ready">Ready</button>
+        <button class="btn btn-sm btn-outline-secondary preview-filter" data-filter="Warning">Warnings</button>
+        <button class="btn btn-sm btn-outline-secondary preview-filter" data-filter="Unresolved">Unresolved</button>
+        <button class="btn btn-sm btn-outline-secondary preview-filter" data-filter="Duplicate">Duplicates</button>
+    </div>
+    <div class="table-shell table-responsive">
+        <table class="table" id="previewTable">
+            <thead><tr><th>Row</th><th>Duplicate Group</th><th>Date</th><th>Source Site</th><th>Matched Site</th><th>Source Activity Type</th><th>Matched Activity Type</th><th>Participants</th><th>Source Donor</th><th>Status</th><th>Warnings</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Records)
+            {
+                <tr data-status="@item.Status"><td>@item.RowNumber</td><td>@if (item.DuplicateGroupId is not null) { <a href="#@item.DuplicateGroupId-details">@item.DuplicateGroupId</a> }</td><td>@item.ActivityDate?.ToString("yyyy-MM-dd")</td><td>@item.SourceSiteCode<br /><small>@item.SourceSiteName</small></td><td>@item.MatchedSiteDisplay</td><td>@item.SourceActivityType</td><td>@item.MatchedActivityTypeName</td><td>@item.ParticipantsTotal</td><td>@item.SourceDonorLabel</td><td><span class="badge @Badge(item.Status)">@item.Status</span></td><td>@string.Join(" ", item.Warnings)</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+@section Scripts {
+<script>
+    document.querySelectorAll('.preview-filter').forEach(button => button.addEventListener('click', () => {
+        const filter = button.dataset.filter;
+        document.querySelectorAll('#previewTable tbody tr').forEach(row => row.style.display = filter === 'All' || row.dataset.status === filter ? '' : 'none');
+    }));
+</script>
+}

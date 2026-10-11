@@ -41,7 +41,7 @@ namespace MAAN.SiteOps.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ProjectSiteId")
+                    b.Property<int?>("ProjectSiteId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ReviewNotes")
@@ -50,6 +50,9 @@ namespace MAAN.SiteOps.Migrations
 
                     b.Property<DateTime?>("ReviewedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("SiteId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -71,6 +74,8 @@ namespace MAAN.SiteOps.Migrations
                     b.HasIndex("ActivityTypeId");
 
                     b.HasIndex("ProjectSiteId");
+
+                    b.HasIndex("SiteId");
 
                     b.ToTable("Activities");
                 });
@@ -1040,12 +1045,19 @@ namespace MAAN.SiteOps.Migrations
                     b.HasOne("MAAN.SiteOps.Models.ProjectSite", "ProjectSite")
                         .WithMany()
                         .HasForeignKey("ProjectSiteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("MAAN.SiteOps.Models.Site", "Site")
+                        .WithMany("Activities")
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("ActivityType");
 
                     b.Navigation("ProjectSite");
+
+                    b.Navigation("Site");
                 });
 
             modelBuilder.Entity("MAAN.SiteOps.Models.ActivityIndicatorContribution", b =>
@@ -1314,6 +1326,8 @@ namespace MAAN.SiteOps.Migrations
 
             modelBuilder.Entity("MAAN.SiteOps.Models.Site", b =>
                 {
+                    b.Navigation("Activities");
+
                     b.Navigation("ProjectSites");
                 });
 

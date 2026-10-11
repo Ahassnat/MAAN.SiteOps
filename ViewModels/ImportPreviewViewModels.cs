@@ -12,12 +12,42 @@ public class ImportPreviewViewModel
     public int UnresolvedActivityTypes { get; set; }
     public int PossibleDuplicates { get; set; }
     public int ExactSourceDuplicates { get; set; }
+    public int PossibleDuplicateRecordCount { get; set; }
+    public int DuplicateGroupCount { get; set; }
+    public List<DuplicateReviewGroupViewModel> DuplicateReviewGroups { get; set; } = [];
     public int ActivityTypesMatched { get; set; }
     public int ActivityTypesUnresolved { get; set; }
     public IReadOnlyList<string> UnresolvedSourceActivityTypes { get; set; } = [];
     public int AlreadyImported { get; set; }
     public int RecordsWithWarnings { get; set; }
+    public List<ImportWarningSummaryViewModel> WarningSummary { get; set; } = [];
+    public int TotalUnresolvedActivityRecords { get; set; }
+    public int TotalUniqueUnresolvedSites { get; set; }
+    public List<UnresolvedActivitySiteViewModel> UnresolvedSiteSummary { get; set; } = [];
     public int BatchId { get; set; }
+    public List<ImportPreviewRecordViewModel> Records { get; set; } = [];
+}
+
+public class UnresolvedActivitySiteViewModel
+{
+    public string? SiteCode { get; set; }
+    public string? SiteName { get; set; }
+    public int ActivityRecordCount { get; set; }
+    public DateTime? EarliestActivityDate { get; set; }
+    public DateTime? LatestActivityDate { get; set; }
+}
+
+public class DuplicateReviewGroupViewModel
+{
+    public string GroupId { get; set; } = string.Empty;
+    public string? SiteCode { get; set; }
+    public string? SiteName { get; set; }
+    public string? ActivityType { get; set; }
+    public DateTime? ActivityDate { get; set; }
+    public int RecordCount { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public bool HasExactSourceDuplicateEvidence { get; set; }
+    public string ReviewClassification { get; set; } = "Needs Review";
     public List<ImportPreviewRecordViewModel> Records { get; set; } = [];
 }
 
@@ -34,6 +64,7 @@ public class ImportPreviewRecordViewModel
     public string? Agency { get; set; }
     public int? MatchedActivityTypeId { get; set; }
     public string? MatchedActivityTypeName { get; set; }
+    public bool MatchedActivityTypeRequiresParticipants { get; set; }
     public DateTime? ActivityDate { get; set; }
     public string? SourceDonorLabel { get; set; }
     public int ParticipantsTotal { get; set; }
@@ -46,8 +77,10 @@ public class ImportPreviewRecordViewModel
     public List<string> Warnings { get; set; } = [];
     public bool ReadyForImport => MatchedSiteId.HasValue && MatchedActivityTypeId.HasValue && ActivityDate.HasValue && DuplicateStatus != "AlreadyImported";
     public string? RecordHash { get; set; }
+    public string? DuplicateGroupId { get; set; }
     public string? Summary { get; set; }
     public string? Notes { get; set; }
+    public string? SourceTopic { get; set; }
     public int? Men { get; set; }
     public int? Women { get; set; }
     public int? Boys { get; set; }
@@ -55,4 +88,10 @@ public class ImportPreviewRecordViewModel
     public int? ElderlyMen { get; set; }
     public int? ElderlyWomen { get; set; }
     public int? PersonsWithDisabilities { get; set; }
+}
+
+public class ImportWarningSummaryViewModel
+{
+    public string Reason { get; set; } = string.Empty;
+    public int Count { get; set; }
 }

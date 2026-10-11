@@ -28,7 +28,7 @@
 
 <form method="get" class="filter-card row g-3">
     <div class="col-md-3"><label class="form-label" for="ProjectId">Project</label><select name="ProjectId" id="ProjectId" class="form-select" asp-items="ViewBag.Projects"><option value="">All projects</option></select></div>
-    <div class="col-md-3"><label class="form-label" for="ProjectSiteId">Site</label><select name="ProjectSiteId" id="ProjectSiteId" class="form-select" asp-items="ViewBag.Sites"><option value="">All sites</option></select></div>
+    <div class="col-md-3"><label class="form-label" for="SiteId">Site</label><select name="SiteId" id="SiteId" class="form-select" asp-items="ViewBag.SiteFilter"><option value="">All sites</option></select></div>
     <div class="col-md-3"><label class="form-label" for="ActivityTypeId">Activity Type</label><select name="ActivityTypeId" id="ActivityTypeId" class="form-select" asp-items="ViewBag.ActivityTypes"><option value="">All types</option></select></div>
     <div class="col-md-3"><label class="form-label" for="Status">Status</label><select name="Status" id="Status" class="form-select" asp-items="ViewBag.Statuses"><option value="">All statuses</option></select></div>
     <div class="col-md-3"><label class="form-label" for="DateFrom">Date From</label><input type="date" name="DateFrom" id="DateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control" /></div>
@@ -44,8 +44,8 @@
     {
         <tr>
             <td>@item.ActivityDate.ToString("yyyy-MM-dd")</td>
-            <td>@item.ProjectSite?.Project?.ProjectCode</td>
-            <td>@item.ProjectSite?.Site?.SiteCode - @item.ProjectSite?.Site?.SiteName</td>
+            <td>@(item.ProjectSite?.Project?.ProjectCode ?? "Unassigned")</td>
+            <td>@item.Site?.SiteCode - @item.Site?.SiteName</td>
             <td>@item.ActivityType?.Name</td>
             <td>@RoleLabel(item.ImplementationRole)</td>
             <td>@(item.Participant?.TotalParticipants ?? 0)</td>

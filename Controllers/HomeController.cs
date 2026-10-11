@@ -64,10 +64,9 @@ public class HomeController : Controller
 
     private IQueryable<MAAN.SiteOps.Models.Activity> ActivityQuery() => _context.Activities
         .AsNoTracking()
-        .Include(a => a.ProjectSite!)
+        .Include(a => a.Site)
+        .Include(a => a.ProjectSite)
             .ThenInclude(ps => ps.Project)
-        .Include(a => a.ProjectSite!)
-            .ThenInclude(ps => ps.Site)
         .Include(a => a.ActivityType);
 
     public IActionResult Privacy()

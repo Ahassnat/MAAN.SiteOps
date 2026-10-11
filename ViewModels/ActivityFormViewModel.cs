@@ -14,6 +14,8 @@ public class ActivityFormViewModel
     [Display(Name = "Site")]
     public int? ProjectSiteId { get; set; }
 
+    public int? SiteId { get; set; }
+
     [Required(ErrorMessage = "Activity type is required.")]
     [Display(Name = "Activity Type")]
     public int? ActivityTypeId { get; set; }

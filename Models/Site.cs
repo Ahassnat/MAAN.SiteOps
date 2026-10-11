@@ -42,4 +42,7 @@ public class Site
 
     public ICollection<ProjectSite> ProjectSites { get; set; }
         = new List<ProjectSite>();
+
+    public ICollection<Activity> Activities { get; set; }
+        = new List<Activity>();
 }

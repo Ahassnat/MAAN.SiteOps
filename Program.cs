@@ -11,6 +11,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<ReferenceDataInitializer>();
 builder.Services.AddScoped<IDataImportService, ZiteExcelImportService>();
+builder.Services.AddSingleton<SiteListPreviewStore>();
 
 var app = builder.Build();
 

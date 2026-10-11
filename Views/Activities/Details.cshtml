@@ -4,14 +4,14 @@
     var canEdit = Model.Status is MAAN.SiteOps.Models.Activity.DraftStatus or MAAN.SiteOps.Models.Activity.ReturnedStatus;
 }
 
-<div class="page-header"><div><h2 class="page-title">@Model.ActivityType?.Name</h2><p class="page-subtitle">@Model.ProjectSite?.Site?.SiteCode - @Model.ProjectSite?.Site?.SiteName</p></div><span class="badge @(Model.Status == "Approved" ? "status-approved" : Model.Status == "Returned" ? "status-returned" : Model.Status == "Submitted" ? "status-submitted" : Model.Status == "Cancelled" ? "status-cancelled" : "status-draft")">@Model.Status</span></div>
+<div class="page-header"><div><h2 class="page-title">@Model.ActivityType?.Name</h2><p class="page-subtitle">@Model.Site?.SiteCode - @Model.Site?.SiteName</p></div><span class="badge @(Model.Status == "Approved" ? "status-approved" : Model.Status == "Returned" ? "status-returned" : Model.Status == "Submitted" ? "status-submitted" : Model.Status == "Cancelled" ? "status-cancelled" : "status-draft")">@Model.Status</span></div>
 @if (TempData["ActivityWarning"] is string warning)
 {
     <div class="alert alert-warning">@warning</div>
 }
 <section class="section-card"><h3 class="section-heading">Activity Information</h3><dl class="row mb-0">
-    <dt class="col-sm-3">Project</dt><dd class="col-sm-9">@Model.ProjectSite?.Project?.ProjectCode - @Model.ProjectSite?.Project?.ProjectName</dd>
-    <dt class="col-sm-3">Site</dt><dd class="col-sm-9">@Model.ProjectSite?.Site?.SiteCode - @Model.ProjectSite?.Site?.SiteName</dd>
+    <dt class="col-sm-3">Project</dt><dd class="col-sm-9">@(Model.ProjectSite?.Project is null ? "Unassigned" : $"{Model.ProjectSite.Project.ProjectCode} - {Model.ProjectSite.Project.ProjectName}")</dd>
+    <dt class="col-sm-3">Site</dt><dd class="col-sm-9">@Model.Site?.SiteCode - @Model.Site?.SiteName</dd>
     <dt class="col-sm-3">Activity Date</dt><dd class="col-sm-9">@Model.ActivityDate.ToString("yyyy-MM-dd")</dd>
     <dt class="col-sm-3">Category</dt><dd class="col-sm-9">@Model.ActivityType?.ActivityCategory?.Name</dd>
     <dt class="col-sm-3">Activity Type</dt><dd class="col-sm-9">@Model.ActivityType?.Name</dd>
