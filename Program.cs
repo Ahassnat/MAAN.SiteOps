@@ -10,6 +10,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<ReferenceDataInitializer>();
+builder.Services.AddScoped<IDataImportService, ZiteExcelImportService>();
 
 var app = builder.Build();
 
